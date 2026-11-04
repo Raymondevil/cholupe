@@ -461,36 +461,59 @@ app.post("/api/logout", requireLogin, (req, res) => {
     });
   });
 });
-async function listVideos() {
-  const entries = await fsp.readdir(VIDEOS_DIR, { withFileTypes: true });
+async function listVideos(usuario) {
+  const esAdmin = usuario.rol === "admin";
+
+  let tienePaquete = esAdmin;
+
+  if (!esAdmin) {
+    tienePaquete = await Compra.exists({
+      usuario: usuario.id,
+      estado: "aprobada",
+      paqueteVideos: true,
+    });
+  }
+
+  const entries = await fsp.readdir(VIDEOS_DIR, {
+    withFileTypes: true,
+  });
+
   const videos = [];
+
   for (const entry of entries) {
     if (
       !entry.isFile() ||
       entry.name.startsWith(".") ||
       !isVideoFile(entry.name)
-    )
-      continue;
+    ) continue;
+
     try {
-      const stat = await fsp.stat(path.join(VIDEOS_DIR, entry.name));
+      const stat = await fsp.stat(
+        path.join(VIDEOS_DIR, entry.name)
+      );
+
       videos.push({
         name: entry.name,
         size: stat.size,
         modified: stat.mtime.toISOString(),
         url: `/videos/${encodeURIComponent(entry.name)}`,
-        downloadUrl: `/videos/${encodeURIComponent(entry.name)}?download=1`,
+        downloadUrl: tienePaquete
+          ? `/videos/${encodeURIComponent(entry.name)}?download=1`
+          : null,
       });
     } catch {
       continue;
     }
   }
+
   videos.sort((a, b) => a.name.localeCompare(b.name));
+
   return videos;
 }
 
 app.get("/api/videos", requireLogin, async (req, res, next) => {
   try {
-    const videos = await listVideos();
+    const videos = await listVideos(req.session.usuario);
     res.json({ count: videos.length, videos });
   } catch (err) {
     next(err);

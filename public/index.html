@@ -533,11 +533,27 @@ await cargarMisCompras();
         detalle.textContent =
           `${formatoBytes(video.size)} · ${new Date(video.modified).toLocaleDateString()}`;
 
-        const descargar = document.createElement('a');
-        descargar.href = video.downloadUrl;
-        descargar.textContent = 'Descargar';
-        descargar.style.color = '#c9a34a';
+if (video.downloadUrl) {
+  const descargar = document.createElement('a');
+  descargar.href = video.downloadUrl;
+  descargar.textContent = 'Descargar';
+  descargar.style.color = '#c9a34a';
+  info.appendChild(descargar);
+} else {
+  const comprar = document.createElement('button');
+  comprar.textContent = 'Comprar paquete de videos — $600 MXN';
 
+  comprar.onclick = () => {
+    $('paquete-videos').checked = true;
+    actualizarCarrito();
+    $('paquete-videos').scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  };
+
+  info.appendChild(comprar);
+}
         info.append(nombre, detalle, descargar);
 
         tarjeta.append(reproductor, info);

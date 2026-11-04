@@ -579,9 +579,7 @@ app.get("/api/compras/mis-compras", requireLogin, async (req, res, next) => {
   }
 });
 // Recibir comprobante de una compra
-app.post(
-  "/api/compras/:id/comprobante",
-  requireLogin,
+app.post("/api/compras/:id/comprobante", requireLogin,
 
   async (req, res, next) => {
     try {

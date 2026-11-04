@@ -320,6 +320,14 @@
   <button id="btn-crear-compra">Continuar con la compra</button>
 
   <div id="mensaje-compra" class="mensaje"></div>
+<div class="panel">
+  <h2>Mis compras</h2>
+  <button id="btn-mis-compras" class="secundario">
+    Actualizar mis compras
+  </button>
+
+  <div id="lista-mis-compras"></div>
+</div>
 </div>
   </section>
 
@@ -484,6 +492,10 @@ async function iniciarInterfaz(usuario) {
     }
 
     await cargarVideos();
+    if (!esAdmin) {
+      await cargarFotos();
+await cargarMisCompras();
+    }
   }
 
   // CATÁLOGO
@@ -564,11 +576,173 @@ async function iniciarInterfaz(usuario) {
   }
 
   let esAdmin = false;
+// CATÁLOGO DE FOTOGRAFÍAS
+let paginaFotos = 1;
+let totalPaginasFotos = 1;
+let fotosSeleccionadas = new Set();
 
+const PRECIO_FOTO = 50;
+const PRECIO_VIDEOS = 600;
+const LIMITE_FOTOS = 24;
   function usuarioEsAdmin() {
     return esAdmin;
   }
+  // CARGAR FOTOGRAFÍAS
+  async function cargarFotos() {
+    const galeria = $('galeria-fotos');
+    galeria.textContent = 'Cargando fotografías...';
 
+    try {
+      const datos = await peticion(
+        `/api/fotos?pagina=${paginaFotos}&limite=${LIMITE_FOTOS}`
+      );
+
+      totalPaginasFotos = datos.paginas;
+      galeria.replaceChildren();
+
+      if (!datos.fotos || datos.fotos.length === 0) {
+        galeria.textContent = 'No hay fotografías disponibles.';
+        return;
+      }
+
+      datos.fotos.forEach(foto => {
+        // Aquí construiremos cada tarjeta.
+        const tarjeta = document.createElement('article');
+        tarjeta.className = 'foto-card';
+
+        const imagen = document.createElement('img');
+        imagen.src = foto.url;
+        imagen.alt = foto.nombre;
+        imagen.loading = 'lazy';
+        const seleccion = document.createElement('button');
+        seleccion.textContent = fotosSeleccionadas.has(foto.nombre)
+          ? 'Quitar del carrito'
+          : 'Agregar al carrito';
+
+        seleccion.className = 'secundario';
+
+        seleccion.onclick = () => {
+          if (fotosSeleccionadas.has(foto.nombre)) {
+            fotosSeleccionadas.delete(foto.nombre);
+          } else {
+            fotosSeleccionadas.add(foto.nombre);
+          }
+
+          actualizarCarrito();
+          seleccion.textContent = fotosSeleccionadas.has(foto.nombre)
+            ? 'Quitar del carrito'
+            : 'Agregar al carrito';
+        };
+
+        tarjeta.appendChild(seleccion);
+        tarjeta.appendChild(imagen);
+        galeria.appendChild(tarjeta);
+      });
+
+      $('info-pagina').textContent =
+        `Página ${paginaFotos} de ${totalPaginasFotos}`;
+
+    } catch (error) {
+      galeria.textContent = error.message;
+    }
+  }
+    // ACTUALIZAR CARRITO
+  function actualizarCarrito() {
+    const resumen = $('resumen-carrito');
+    resumen.replaceChildren();
+
+    if (fotosSeleccionadas.size === 0) {
+      const texto = document.createElement('p');
+      texto.textContent = 'No has seleccionado fotografías.';
+      resumen.appendChild(texto);
+    } else {
+      const texto = document.createElement('p');
+      texto.textContent =
+        `Fotografías seleccionadas: ${fotosSeleccionadas.size}`;
+      resumen.appendChild(texto);
+    }
+
+    const costoFotos = fotosSeleccionadas.size * PRECIO_FOTO;
+
+    const costoVideos = $('paquete-videos').checked
+      ? PRECIO_VIDEOS
+      : 0;
+
+    $('total-compra').textContent = costoFotos + costoVideos;
+  }
+  // MIS COMPRAS
+  async function cargarMisCompras() {
+    const lista = $('lista-mis-compras');
+    lista.textContent = 'Cargando compras...';
+
+    try {
+      const compras = await peticion('/api/compras/mis-compras');
+      lista.replaceChildren();
+
+      if (!compras.length) {
+        lista.textContent = 'Todavía no tienes compras.';
+        return;
+      }
+
+      compras.forEach(compra => {
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'usuario';
+
+        const informacion = document.createElement('div');
+        informacion.textContent =
+          `Folio: ${compra._id} · Total: $${compra.total} · Estado: ${compra.estado}`;
+
+        tarjeta.appendChild(informacion);
+        if (compra.estado === 'pendiente_pago') {
+          const formulario = document.createElement('form');
+
+          const archivo = document.createElement('input');
+          archivo.type = 'file';
+          archivo.accept = 'image/jpeg,image/png,application/pdf';
+          archivo.required = true;
+
+          const boton = document.createElement('button');
+          boton.type = 'submit';
+          boton.textContent = 'Enviar comprobante';
+
+          formulario.append(archivo, boton);
+
+          formulario.onsubmit = async event => {
+            event.preventDefault();
+
+            if (!archivo.files.length) return;
+
+            const datos = new FormData();
+            datos.append('comprobante', archivo.files[0]);
+
+            boton.disabled = true;
+
+            try {
+              await peticion(
+                `/api/compras/${encodeURIComponent(compra._id)}/comprobante`,
+                {
+                  method: 'POST',
+                  body: datos
+                }
+              );
+
+              await cargarMisCompras();
+
+            } catch (error) {
+              alert(error.message);
+              boton.disabled = false;
+            }
+          };
+
+          tarjeta.appendChild(formulario);
+        }
+        lista.appendChild(tarjeta);
+      });
+
+    } catch (error) {
+      lista.textContent = error.message;
+    }
+  }
   // USUARIOS PENDIENTES
   async function cargarUsuarios() {
     const lista = $('lista-usuarios');
@@ -690,7 +864,76 @@ async function iniciarInterfaz(usuario) {
   }
 
   $('btn-recargar').onclick = cargarVideos;
+    // CREAR COMPRA
+  $('btn-crear-compra').onclick = async () => {
+    const fotos = Array.from(fotosSeleccionadas);
+    const paqueteVideos = $('paquete-videos').checked;
+
+    if (fotos.length === 0 && !paqueteVideos) {
+      $('mensaje-compra').textContent =
+        'Selecciona fotografías o el paquete de videos.';
+      return;
+    }
+
+    const boton = $('btn-crear-compra');
+    boton.disabled = true;
+
+    try {
+      const compra = await peticion('/api/compras', {
+        method: 'POST',
+        body: JSON.stringify({
+          fotos,
+          paqueteVideos
+        })
+      });
+
+const mensajeCompra = $('mensaje-compra');
+mensajeCompra.replaceChildren();
+
+const texto = document.createElement('p');
+texto.textContent =
+  `Compra registrada correctamente. Folio: ${compra.compra.id}. Total: $${compra.compra.total} MXN.`;
+
+const whatsapp = document.createElement('a');
+
+const consulta =
+  `Hola, acabo de registrar una compra en Fotos El Tigre. Mi folio es ${compra.compra.id} y el total es $${compra.compra.total} MXN. Necesito los datos para realizar mi transferencia o depósito.`;
+
+whatsapp.href =
+  `https://wa.me/523118470860?text=${encodeURIComponent(consulta)}`;
+
+whatsapp.target = '_blank';
+whatsapp.rel = 'noopener noreferrer';
+whatsapp.textContent = 'Solicitar datos de pago por WhatsApp';
+
+mensajeCompra.append(texto, whatsapp);
+      await cargarMisCompras();
+
+    } catch (error) {
+      $('mensaje-compra').textContent = error.message;
+    } finally {
+      boton.disabled = false;
+    }
+  };
+    // PAGINACIÓN DE FOTOGRAFÍAS
+  $('pagina-anterior').onclick = async () => {
+    if (paginaFotos > 1) {
+      paginaFotos--;
+      await cargarFotos();
+    }
+  };
+
+  $('pagina-siguiente').onclick = async () => {
+    if (paginaFotos < totalPaginasFotos) {
+      paginaFotos++;
+      await cargarFotos();
+    }
+  };
+
+  // PAQUETE DE VIDEOS
+  $('paquete-videos').onchange = actualizarCarrito;
   $('btn-usuarios').onclick = cargarUsuarios;
+  $('btn-mis-compras').onclick = cargarMisCompras;
 
   // Comprobar la sesión al abrir la página.
   comprobarSesion();

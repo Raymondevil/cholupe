@@ -1,0 +1,29 @@
+{
+  "name": "cholupe-video-server",
+  "version": "1.0.0",
+  "description": "Servidor Express para distribución y streaming de videos con soporte de rangos",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "check": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "connect-mongo": "^6.0.0",
+    "dotenv": "^18.0.9",
+    "express": "^4.22.3",
+    "express-rate-limit": "^8.7.3",
+    "express-session": "^1.19.0",
+    "mime-types": "^2.1.35",
+    "mongoose": "^9.11.4",
+    "multer": "^2.5.0"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true
+  }
+}

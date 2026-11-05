@@ -110,7 +110,7 @@ function resolvePhotoPath(filename, directory) {
 
   const name = path.basename(filename);
 
-  if (!/^foto_\d+\.jpg$/.test(name) || name !== filename) {
+  if (!/^foto_\d+\.(webp|jpg)$/.test(name) || name !== filename) {
     return null;
   }
 
@@ -547,7 +547,7 @@ app.post("/api/compras", requireLogin, async (req, res, next) => {
     if (
       !fotosUnicas.every(
         (nombre) =>
-          typeof nombre === "string" && /^foto_\d+\.jpg$/.test(nombre),
+          typeof nombre === "string" && /^foto_\d+\.(webp|jpg)$/.test(nombre),
       )
     ) {
       return res.status(400).json({
@@ -875,7 +875,7 @@ app.get("/api/fotos", requireLogin, async (req, res, next) => {
     const archivos = await fsp.readdir(FOTOS_PREVIEW_DIR);
 
     const fotos = archivos
-      .filter((nombre) => /^foto_\d+\.jpg$/.test(nombre))
+      .filter((nombre) => /^foto_\d+\.(webp|jpg)$/.test(nombre))
       .sort((a, b) => {
         const numeroA = Number(a.match(/\d+/)[0]);
         const numeroB = Number(b.match(/\d+/)[0]);

@@ -519,8 +519,7 @@ await cargarMisCompras();
         reproductor.controls = true;
         reproductor.preload = 'metadata';
         reproductor.playsInline = true;
-        reproductor.src = video.url;
-
+	reproductor.src = `${video.url}?preview=1`;
         const info = document.createElement('div');
         info.className = 'video-info';
 

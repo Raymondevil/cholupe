@@ -993,20 +993,22 @@ app.get("/videos/:filename", requireLogin, async (req, res, next) => {
 
     const esAdmin = req.session.usuario.rol === "admin";
 
-    if (!esAdmin) {
-      const tienePaquete = await Compra.exists({
-        usuario: req.session.usuario.id,
-        estado: "aprobada",
-        paqueteVideos: true,
-      });
 
-      if (!tienePaquete) {
-        return res.status(403).json({
-          error: "Necesitas tener aprobado el paquete de videos para acceder.",
-        });
-      }
-    }
+const esVistaPrevia = req.query.preview === "1";
 
+if (!esAdmin && !esVistaPrevia) {
+  const tienePaquete = await Compra.exists({
+    usuario: req.session.usuario.id,
+    estado: "aprobada",
+    paqueteVideos: true,
+  });
+
+  if (!tienePaquete) {
+    return res.status(403).json({
+      error: "Necesitas tener aprobado el paquete de videos para acceder.",
+    });
+  }
+}
     let stat;
     try {
       stat = await fsp.stat(filePath);

@@ -195,6 +195,152 @@
       h1 { font-size: 1rem; }
       main { padding: 15px 12px 40px; }
     }
+/* ===== NUEVO DISEÑO FOTOS EL TIGRE ===== */
+
+body {
+  background:
+    radial-gradient(ellipse at top, #292114 0%, #101010 42%, #090909 100%);
+  line-height: 1.6;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 18px max(20px, calc((100% - 1150px) / 2));
+  background: rgba(12, 12, 12, .96);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px #0008;
+}
+
+h1 {
+  letter-spacing: 2px;
+  font-weight: 800;
+}
+
+h2 {
+  font-size: 1.4rem;
+  letter-spacing: .5px;
+}
+
+main {
+  padding-top: 35px;
+}
+
+.panel {
+  background: linear-gradient(145deg, #202020, #151515);
+  border: 1px solid #383027;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 12px 30px #0005;
+}
+
+.auth {
+  margin-top: 55px;
+  padding: 30px;
+}
+
+input {
+  padding: 14px;
+  border-radius: 9px;
+  border: 1px solid #484038;
+  transition: border-color .2s;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--dorado);
+}
+
+input[type="checkbox"] {
+  display: inline-block;
+  width: auto;
+  accent-color: var(--dorado);
+}
+
+input[type="file"] {
+  width: 100%;
+}
+
+button {
+  border-radius: 9px;
+  padding: 12px 19px;
+  transition: transform .2s, filter .2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+.grid {
+  gap: 22px;
+}
+
+.video-card {
+  border-radius: 14px;
+  border-color: #40372a;
+  background: #171717;
+  transition: transform .2s, border-color .2s;
+}
+
+.video-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--dorado);
+}
+
+.video-info {
+  padding: 17px;
+}
+
+.video-nombre {
+  color: var(--dorado);
+  font-size: 1.05rem;
+}
+
+.barra {
+  gap: 15px;
+}
+
+.usuario {
+  padding: 18px 12px;
+}
+
+.oculto {
+  display: none !important;
+}
+
+@media (max-width: 600px) {
+  header {
+    padding: 14px;
+  }
+
+  header h1 {
+    font-size: .95rem;
+    letter-spacing: 1px;
+  }
+
+  main {
+    padding: 20px 12px 45px;
+  }
+
+  .panel {
+    padding: 17px;
+    border-radius: 12px;
+  }
+
+  .auth {
+    margin-top: 25px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  button {
+    max-width: 100%;
+  }
+}
   </style>
 </head>
 
@@ -624,18 +770,29 @@ const LIMITE_FOTOS = 24;
         // Aquí construiremos cada tarjeta.
         const tarjeta = document.createElement('article');
         tarjeta.className = 'foto-card';
-
+tarjeta.style.overflow = 'hidden';
+tarjeta.style.borderRadius = '14px';
+tarjeta.style.background = '#191919';
+tarjeta.style.border = '1px solid #40372a';
+tarjeta.style.padding = '12px';
         const imagen = document.createElement('img');
         imagen.src = foto.url;
         imagen.alt = foto.nombre;
         imagen.loading = 'lazy';
+	imagen.style.width = '100%';
+imagen.style.aspectRatio = '4 / 5';
+imagen.style.objectFit = 'cover';
+imagen.style.borderRadius = '10px';
+imagen.style.display = 'block';
+imagen.style.marginBottom = '12px';
         const seleccion = document.createElement('button');
         seleccion.textContent = fotosSeleccionadas.has(foto.nombre)
           ? 'Quitar del carrito'
           : 'Agregar al carrito';
 
         seleccion.className = 'secundario';
-
+seleccion.style.width = '100%';
+seleccion.style.marginBottom = '12px';
         seleccion.onclick = () => {
           if (fotosSeleccionadas.has(foto.nombre)) {
             fotosSeleccionadas.delete(foto.nombre);
